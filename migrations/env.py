@@ -9,8 +9,6 @@ from sqlalchemy.engine import URL, Connection
 from sqlmodel import SQLModel
 
 from common.settings import DatabaseConnectionSettings
-from models.learning_resources_models import LearningResource
-from models.skills_models import Skill
 
 
 class DatabaseMigrationSettings(DatabaseConnectionSettings):
