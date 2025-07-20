@@ -47,8 +47,3 @@ class DatabaseConnectionSettings(DefaultSettings):
 
 class Settings(DatabaseConnectionSettings):
     debug: bool
-
-
-d = DatabaseConnectionSettings()
-print(d.model_dump())
-print(d.database.get_url())

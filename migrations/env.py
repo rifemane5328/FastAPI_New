@@ -10,6 +10,9 @@ from sqlmodel import SQLModel
 
 from common.settings import DatabaseConnectionSettings
 
+from models import Vacancy
+from models import Worker
+
 
 class DatabaseMigrationSettings(DatabaseConnectionSettings):
     @computed_field  # type: ignore
