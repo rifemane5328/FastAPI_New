@@ -24,4 +24,3 @@ class WorkerCreateSchema(SQLModel):
     last_name: str = Field(max_length=20)
     biography: str = Field(max_length=250)
     birth_date: date
-
