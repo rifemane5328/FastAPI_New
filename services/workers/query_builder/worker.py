@@ -2,9 +2,10 @@ from typing import List
 
 from sqlmodel import select, delete
 from dependecies.session import AsyncSessionDep
-from common.errors import EmptyQueryResult, InvalidId
+from common.errors import EmptyQueryResult
 from models import Worker
 from services.workers.schemas.worker import WorkerCreateSchema
+from services.workers.errors import WorkerNotFound
 
 
 class WorkerQueryBuilder:
@@ -30,15 +31,13 @@ class WorkerQueryBuilder:
         query = select(Worker).where(worker_id == Worker.id)
         result = await session.execute(query)
         worker = result.scalar()
-        if worker is None:
-            raise InvalidId
+        if not worker:
+            raise WorkerNotFound
         return worker
 
     @staticmethod
-    async def delete_worker(session: AsyncSessionDep, worker_id: int):
-        worker = await WorkerQueryBuilder.get_worker_by_id(session, worker_id)
-        if worker is None:
-            raise InvalidId
+    async def delete_worker(session: AsyncSessionDep, worker_id: int) -> None:
+        await WorkerQueryBuilder.get_worker_by_id(session, worker_id)
 
         query = delete(Worker).where(Worker.id == worker_id)
         await session.execute(query)
