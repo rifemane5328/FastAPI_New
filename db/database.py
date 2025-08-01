@@ -46,7 +46,7 @@ class Database:
 
 class DatabaseSession:
     def __init__(self, commit_on_exit: bool = False,
-                 session_maker: Optional[async_sessionmaker] = None) -> None:  #
+                 session_maker: Optional[async_sessionmaker] = None) -> None:
         self.commit_on_exit = commit_on_exit
         if session_maker is None:
             self._session_maker = Database().session_maker

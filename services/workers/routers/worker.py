@@ -10,12 +10,14 @@ workers_router = APIRouter()
 
 
 @workers_router.get('/workers')
-async def get_workers(session: AsyncSessionDep) -> WorkerListResponseSchema:
+async def get_workers(session: AsyncSessionDep, worker_id: int | None = None) -> WorkerListResponseSchema:
     try:
         workers = await WorkerQueryBuilder.get_workers(session)
         return WorkerListResponseSchema(items=workers)
     except EmptyQueryResult:
         raise HTTPException(status_code=status.HTTP_204_NO_CONTENT)
+    except WorkerNotFound as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 
 
 @workers_router.post('/workers')
@@ -24,13 +26,15 @@ async def create_worker(session: AsyncSessionDep, data: WorkerCreateSchema) -> W
     return new_worker
 
 
-@workers_router.get('/worker_by_id/{id}')
-async def get_worker_by_id(session: AsyncSessionDep, worker_id: int) -> WorkerResponseSchema:
-    try:
-        worker = await WorkerQueryBuilder.get_worker_by_id(session, worker_id)
-        return worker
-    except WorkerNotFound as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+# Now in main get-endpoint
+
+# @workers_router.get('/worker_by_id/{id}')
+# async def get_worker_by_id(session: AsyncSessionDep, worker_id: int) -> WorkerResponseSchema:
+#     try:
+#         worker = await WorkerQueryBuilder.get_worker_by_id(session, worker_id)
+#         return worker
+#     except WorkerNotFound as e:
+#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 
 
 @workers_router.delete('/worker_by_id/{id}', status_code=status.HTTP_204_NO_CONTENT)

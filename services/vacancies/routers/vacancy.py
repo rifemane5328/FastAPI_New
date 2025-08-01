@@ -4,19 +4,22 @@ from dependecies.session import AsyncSessionDep
 from services.vacancies.schemas.vacancy import VacancyResponseSchema, VacancyListResponseSchema, VacancyCreateSchema
 from services.vacancies.query_builder.vacancy import VacancyQueryBuilder
 from common.errors import EmptyQueryResult
-from services.vacancies.errors import VacancyNotFound
+from services.vacancies.errors import VacancyNotFound, ImpossibleRange
 
 
 vacancies_router = APIRouter()
 
 
 @vacancies_router.get('/vacancies')
-async def get_vacancies(session: AsyncSessionDep) -> VacancyListResponseSchema:
+async def get_vacancies(session: AsyncSessionDep, vacancy_id: int | None = None, s_from: float | None = None,
+                        s_to: float | None = None) -> VacancyListResponseSchema:
     try:
         vacancies = await VacancyQueryBuilder.get_vacancies(session)
         return VacancyListResponseSchema(items=vacancies)
     except EmptyQueryResult:
         raise HTTPException(status_code=status.HTTP_204_NO_CONTENT)
+    except VacancyNotFound as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 
 
 @vacancies_router.post('/vacancies')
@@ -25,13 +28,15 @@ async def create_vacancy(session: AsyncSessionDep, data: VacancyCreateSchema) ->
     return new_vacancy
 
 
-@vacancies_router.get('/vacancy_by_id/{id}')
-async def get_vacancy_by_id(session: AsyncSessionDep, vacancy_id: int) -> VacancyResponseSchema:
-    try:
-        new_vacancy = await VacancyQueryBuilder.get_vacancy_by_id(session, vacancy_id)
-        return new_vacancy
-    except VacancyNotFound as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+# Now in main get-endpoint
+
+# @vacancies_router.get('/vacancy_by_id/{id}')
+# async def get_vacancy_by_id(session: AsyncSessionDep, vacancy_id: int) -> VacancyResponseSchema:
+#     try:
+#         new_vacancy = await VacancyQueryBuilder.get_vacancy_by_id(session, vacancy_id)
+#         return new_vacancy
+#     except VacancyNotFound as e:
+#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 
 
 @vacancies_router.delete('/vacancy_by_id/{id}', status_code=status.HTTP_204_NO_CONTENT)
@@ -40,3 +45,14 @@ async def delete_vacancy_by_id(session: AsyncSessionDep, vacancy_id: int) -> Non
         await VacancyQueryBuilder.delete_vacancy_by_id(session, vacancy_id)
     except VacancyNotFound as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+
+
+# Now in main get-endpoint
+
+# @vacancies_router.get('/vacancies_by_salary/{salary_from}/{salary_to}')
+# async def get_vacancies_by_id(session: AsyncSessionDep, s_from: float, s_to: float) -> VacancyListResponseSchema:
+#     try:
+#         vacancies = await VacancyQueryBuilder.get_vacancy_by_salary(session, s_from, s_to)
+#         return vacancies
+#     except VacancyNotFound as e:
+#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))

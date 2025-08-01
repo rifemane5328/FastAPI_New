@@ -5,17 +5,24 @@ from dependecies.session import AsyncSessionDep
 from models import Vacancy
 from common.errors import EmptyQueryResult
 from services.vacancies.schemas.vacancy import VacancyCreateSchema
-from services.vacancies.errors import VacancyNotFound
+from services.vacancies.errors import VacancyNotFound, ImpossibleRange
 
 
 class VacancyQueryBuilder:
     @staticmethod
-    async def get_vacancies(session: AsyncSessionDep) -> List[Vacancy]:
+    async def get_vacancies(session: AsyncSessionDep, vacancy_id: int | None = None, s_from: float | None = None,
+                            s_to: float | None = None) -> List[Vacancy]:
         query = select(Vacancy)
         result = await session.execute(query)
         vacancies = list(result.scalars())
         if not vacancies:
             raise EmptyQueryResult
+        if vacancy_id:
+            vacancy = VacancyQueryBuilder.get_vacancy_by_id(session, vacancy_id)
+            return vacancy
+        if s_from and s_to:
+            vacancies_s = VacancyQueryBuilder.get_vacancy_by_salary(session, s_from, s_to)
+            return vacancies_s
         return vacancies
 
     @staticmethod
@@ -43,3 +50,14 @@ class VacancyQueryBuilder:
         query = delete(Vacancy).where(vacancy_id == Vacancy.id)
         await session.execute(query)
         await session.commit()
+
+    @staticmethod
+    async def get_vacancy_by_salary(session: AsyncSessionDep, s_from: float, s_to: float) -> List[Vacancy]:
+        query = select(Vacancy).where(Vacancy.salary >= s_from, Vacancy.salary <= s_to)
+        if s_from > s_to:
+            raise ImpossibleRange
+        result = await session.execute(query)
+        vacancies = list(result.scalars())
+        if not vacancies:
+            raise VacancyNotFound
+        return vacancies

@@ -10,12 +10,15 @@ from services.workers.errors import WorkerNotFound
 
 class WorkerQueryBuilder:
     @staticmethod
-    async def get_workers(session: AsyncSessionDep) -> List[Worker]:
+    async def get_workers(session: AsyncSessionDep, worker_id: int | None = None) -> List[Worker]:
         query = select(Worker)
         result = await session.execute(query)
         workers = list(result.scalars())
         if not workers:
             raise EmptyQueryResult
+        if worker_id:
+            worker = await WorkerQueryBuilder.get_worker_by_id(session, worker_id)
+            return worker
         return workers
 
     @staticmethod
