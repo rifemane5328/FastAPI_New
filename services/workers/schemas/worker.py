@@ -1,5 +1,5 @@
 from datetime import date
-from typing import List
+from typing import List, Optional
 
 from sqlmodel import SQLModel, Field
 
@@ -24,3 +24,10 @@ class WorkerCreateSchema(SQLModel):
     last_name: str = Field(max_length=20)
     biography: str = Field(max_length=250)
     birth_date: date
+
+
+class WorkerUpdateSchema(SQLModel):
+    name: Optional[str] = Field(max_length=20)
+    last_name: Optional[str] = Field(max_length=20)
+    biography: Optional[str] = Field(max_length=250)
+    birth_date: Optional[date]
