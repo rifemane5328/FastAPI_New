@@ -1,8 +1,12 @@
-from fastapi import APIRouter, status, HTTPException
+from typing import Annotated, Optional
+
+from fastapi import APIRouter, status, HTTPException, Depends
 
 from common.errors import EmptyQueryResult
+from common.pagination import PaginationParams
 from dependecies.session import AsyncSessionDep
 from services.workers.query_builder.worker import WorkerQueryBuilder
+from services.workers.schemas.filters import WorkerFilter
 from services.workers.schemas.worker import (WorkerListResponseSchema, WorkerResponseSchema, WorkerCreateSchema,
                                              WorkerUpdateSchema)
 from services.workers.errors import WorkerNotFound
@@ -11,14 +15,14 @@ workers_router = APIRouter()
 
 
 @workers_router.get('/workers')
-async def get_workers(session: AsyncSessionDep) -> WorkerListResponseSchema:
+async def get_workers(session: AsyncSessionDep,
+                      pagination_params: Annotated[PaginationParams, Depends(PaginationParams)],
+                      name_filter: WorkerFilter = Depends()) -> WorkerListResponseSchema:
     try:
-        workers = await WorkerQueryBuilder.get_workers(session)
+        workers = await WorkerQueryBuilder.get_workers(session, pagination_params, name_filter)
         return WorkerListResponseSchema(items=workers)
     except EmptyQueryResult:
         raise HTTPException(status_code=status.HTTP_204_NO_CONTENT)
-    except WorkerNotFound as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 
 
 @workers_router.get('/worker_by_id/{id}')
@@ -30,7 +34,7 @@ async def get_worker_by_id(session: AsyncSessionDep, worker_id: int) -> WorkerRe
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 
 
-@workers_router.post('/workers')
+@workers_router.post('/workers', status_code=status.HTTP_201_CREATED)
 async def create_worker(session: AsyncSessionDep, data: WorkerCreateSchema) -> WorkerResponseSchema:
     new_worker = await WorkerQueryBuilder.create_worker(session, data)
     return new_worker
@@ -43,3 +47,10 @@ async def delete_worker_by_id(session: AsyncSessionDep, worker_id: int) -> None:
     except WorkerNotFound as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 
+
+@workers_router.patch('/worker_by_id/{worker_id}')
+async def patch_worker_by_id(session: AsyncSessionDep, worker_id: int, data: WorkerUpdateSchema):
+    try:
+        await WorkerQueryBuilder.patch_worker_by_id(session, worker_id, data)
+    except WorkerNotFound as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))

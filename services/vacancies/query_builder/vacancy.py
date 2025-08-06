@@ -11,7 +11,8 @@ from services.vacancies.errors import VacancyNotFound, ImpossibleRange
 
 class VacancyQueryBuilder:
     @staticmethod
-    async def get_vacancies(session: AsyncSessionDep, s_from: Optional[float] = Query(0.00, description="salary_from"),
+    async def get_vacancies(session: AsyncSessionDep,
+                            s_from: Optional[float] = Query(0.00, description="salary_from"),
                             s_to: Optional[float] = Query(25000.00, description="salary_to")) -> List[Vacancy]:
         query = select(Vacancy)
         result = await session.execute(query)
