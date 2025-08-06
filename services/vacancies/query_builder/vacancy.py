@@ -1,28 +1,45 @@
 from typing import List, Optional
 from fastapi import Query
+from sqlalchemy import Select
 
 from sqlmodel import select, delete
 from dependecies.session import AsyncSessionDep
 from models import Vacancy
 from common.errors import EmptyQueryResult
+from common.pagination import PaginationParams
 from services.vacancies.schemas.vacancy import VacancyCreateSchema
 from services.vacancies.errors import VacancyNotFound, ImpossibleRange
+from services.vacancies.schemas.filters import VacancyFilter
 
 
 class VacancyQueryBuilder:
     @staticmethod
-    async def get_vacancies(session: AsyncSessionDep,
-                            s_from: Optional[float] = Query(0.00, description="salary_from"),
-                            s_to: Optional[float] = Query(25000.00, description="salary_to")) -> List[Vacancy]:
-        query = select(Vacancy)
-        result = await session.execute(query)
+    async def get_vacancies(session: AsyncSessionDep, pagination_params: PaginationParams,
+                            title_filter: Optional[VacancyFilter] = None,
+                            s_from: Optional[float] = None, s_to: Optional[float] = None) -> List[Vacancy]:
+
+        query_offset, query_limit = (pagination_params.page - 1) * pagination_params.size, pagination_params.size
+        select_query = await VacancyQueryBuilder.apply_filters(select(Vacancy), title_filter, s_from, s_to)
+        select_query = select_query.offset(query_offset).limit(query_limit)
+        result = await session.execute(select_query)
         vacancies = list(result.scalars())
         if not vacancies:
             raise EmptyQueryResult
-        if s_from or s_to or s_from and s_to:
-            vacancies_s = await VacancyQueryBuilder.get_vacancy_by_salary(session, s_from, s_to)
-            return vacancies_s
         return vacancies
+
+    @staticmethod
+    async def apply_filters(select_query: Select, title_filter: VacancyFilter,
+                            s_from: Optional[float] = Query(0.00, description="salary_from"),
+                            s_to: Optional[float] = Query(25000.00, description="salary_to")) -> Select:
+        if s_from > s_to:
+            raise ImpossibleRange
+        if s_from:
+            select_query = select_query.where(Vacancy.salary >= s_from)
+        if s_to:
+            select_query = select_query.where(Vacancy.salary <= s_to)
+        if title_filter and title_filter.title:
+            select_query = select_query.where(Vacancy.title.ilike(f'%{title_filter.title}%'))
+        return select_query
 
     @staticmethod
     async def get_vacancy_by_id(session: AsyncSessionDep, vacancy_id: int) -> Vacancy:
@@ -32,25 +49,6 @@ class VacancyQueryBuilder:
         if not vacancy:
             raise VacancyNotFound
         return vacancy
-
-    @staticmethod
-    async def get_vacancy_by_salary(session: AsyncSessionDep,
-                                    s_from: Optional[float] = Query(0.00, description="salary_from"),
-                                    s_to: Optional[float] = Query(25000.00, description="salary_to")) -> List[Vacancy]:
-        if s_from > s_to:
-            raise ImpossibleRange
-        salary_filters = []
-        if s_from:
-            salary_filters.append(Vacancy.salary >= s_from)
-        elif s_to:
-            salary_filters.append(Vacancy.salary <= s_to)
-
-        query = select(Vacancy).where(*salary_filters)
-        result = await session.execute(query)
-        vacancies = list(result.scalars())
-        if not vacancies:
-            raise EmptyQueryResult
-        return vacancies
 
     @staticmethod
     async def create_vacancy(session: AsyncSessionDep, data: VacancyCreateSchema) -> Vacancy:
