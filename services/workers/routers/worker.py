@@ -5,6 +5,7 @@ from fastapi import APIRouter, status, HTTPException, Depends
 from common.errors import EmptyQueryResult
 from common.pagination import PaginationParams
 from dependecies.session import AsyncSessionDep
+from models import Worker
 from services.workers.query_builder.worker import WorkerQueryBuilder
 from services.workers.schemas.filters import WorkerFilter
 from services.workers.schemas.worker import (WorkerListResponseSchema, WorkerResponseSchema, WorkerCreateSchema,
@@ -48,9 +49,11 @@ async def delete_worker_by_id(session: AsyncSessionDep, worker_id: int) -> None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 
 
-@workers_router.patch('/worker_by_id/{worker_id}')
-async def patch_worker_by_id(session: AsyncSessionDep, worker_id: int, data: WorkerUpdateSchema):
+@workers_router.patch('/worker_by_id/{worker_id}', response_model=Worker, status_code=status.HTTP_200_OK)
+async def update_worker(session: AsyncSessionDep,
+                        worker_id: int, data: WorkerUpdateSchema) -> WorkerResponseSchema:
     try:
-        await WorkerQueryBuilder.patch_worker_by_id(session, worker_id, data)
+        worker = await WorkerQueryBuilder.update_worker(session, worker_id, data)
+        return worker
     except WorkerNotFound as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))

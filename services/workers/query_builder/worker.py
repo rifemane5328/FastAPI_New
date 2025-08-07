@@ -59,5 +59,11 @@ class WorkerQueryBuilder:
         await session.commit()
 
     @staticmethod
-    async def patch_worker_by_id(session: AsyncSessionDep, worker_id: int, data: WorkerUpdateSchema):
+    async def update_worker(session: AsyncSessionDep, worker_id: int, data: WorkerUpdateSchema) -> Worker:
         worker = await WorkerQueryBuilder.get_worker_by_id(session, worker_id)
+        for key, value in data.model_dump(exclude_unset=True).items():
+            setattr(worker, key, value)
+        await session.commit()
+        await session.refresh(worker)
+        return worker
+

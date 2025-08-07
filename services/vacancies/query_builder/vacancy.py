@@ -7,7 +7,7 @@ from dependecies.session import AsyncSessionDep
 from models import Vacancy
 from common.errors import EmptyQueryResult
 from common.pagination import PaginationParams
-from services.vacancies.schemas.vacancy import VacancyCreateSchema
+from services.vacancies.schemas.vacancy import VacancyCreateSchema, VacancyUpdateSchema
 from services.vacancies.errors import VacancyNotFound, ImpossibleRange
 from services.vacancies.schemas.filters import VacancyFilter
 
@@ -66,3 +66,12 @@ class VacancyQueryBuilder:
         query = delete(Vacancy).where(vacancy_id == Vacancy.id)
         await session.execute(query)
         await session.commit()
+
+    @staticmethod
+    async def update_vacancy(session: AsyncSessionDep, vacancy_id: int, data: VacancyUpdateSchema) -> Vacancy:
+        vacancy = await VacancyQueryBuilder.get_vacancy_by_id(session, vacancy_id)
+        for key, value in data.model_dump(exclude_unset=True).items():
+            setattr(vacancy, key, value)
+        await session.commit()
+        await session.refresh(vacancy)
+        return vacancy

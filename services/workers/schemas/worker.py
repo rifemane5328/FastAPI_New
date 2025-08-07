@@ -1,6 +1,7 @@
 from datetime import date
 from typing import List, Optional
 
+from pydantic import ConfigDict
 from sqlmodel import SQLModel, Field
 
 
@@ -27,7 +28,7 @@ class WorkerCreateSchema(SQLModel):
 
 
 class WorkerUpdateSchema(SQLModel):
-    name: Optional[str] = Field(max_length=20)
-    last_name: Optional[str] = Field(max_length=20)
-    biography: Optional[str] = Field(max_length=250)
-    birth_date: Optional[date]
+    name: Optional[str] = Field(default=None, max_length=20)
+    last_name: Optional[str] = Field(default=None, max_length=20)
+    biography: Optional[str] = Field(default=None, max_length=250)
+    birth_date: Optional[date] = Field(default=None)

@@ -2,13 +2,14 @@ from typing import Annotated
 from fastapi import APIRouter, status, HTTPException, Query, Depends
 
 from dependecies.session import AsyncSessionDep
-from services.vacancies.schemas.vacancy import VacancyResponseSchema, VacancyListResponseSchema, VacancyCreateSchema
+from models import Vacancy
+from services.vacancies.schemas.vacancy import VacancyResponseSchema, VacancyListResponseSchema, VacancyCreateSchema, \
+    VacancyUpdateSchema
 from services.vacancies.query_builder.vacancy import VacancyQueryBuilder
 from common.errors import EmptyQueryResult
 from common.pagination import PaginationParams
 from services.vacancies.errors import VacancyNotFound, ImpossibleRange
 from services.vacancies.schemas.filters import VacancyFilter
-
 
 vacancies_router = APIRouter()
 
@@ -50,5 +51,14 @@ async def create_vacancy(session: AsyncSessionDep, data: VacancyCreateSchema) ->
 async def delete_vacancy_by_id(session: AsyncSessionDep, vacancy_id: int) -> None:
     try:
         await VacancyQueryBuilder.delete_vacancy_by_id(session, vacancy_id)
+    except VacancyNotFound as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+
+
+@vacancies_router.patch('/vacancy_by_id/{id}', response_model=Vacancy, status_code=status.HTTP_200_OK)
+async def update_vacancy(session: AsyncSessionDep, vacancy_id: int, data: VacancyUpdateSchema) -> VacancyResponseSchema:
+    try:
+        vacancy = await VacancyQueryBuilder.update_vacancy(session, vacancy_id, data)
+        return vacancy
     except VacancyNotFound as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
