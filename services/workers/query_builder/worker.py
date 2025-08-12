@@ -67,3 +67,12 @@ class WorkerQueryBuilder:
         await session.refresh(worker)
         return worker
 
+    @staticmethod
+    async def update_worker_fully(session: AsyncSessionDep, worker_id: int, data: WorkerCreateSchema) -> Worker:
+        worker = await WorkerQueryBuilder.get_worker_by_id(session, worker_id)
+        for key, value in data.model_dump().items():
+            setattr(worker, key, value)
+        await session.commit()
+        await session.refresh(worker)
+        return worker
+

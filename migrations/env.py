@@ -10,8 +10,7 @@ from sqlmodel import SQLModel
 
 from common.settings import DatabaseConnectionSettings
 
-from models import Vacancy
-from models import Worker
+from models import Vacancy, Worker, User
 
 
 class DatabaseMigrationSettings(DatabaseConnectionSettings):

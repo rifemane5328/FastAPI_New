@@ -75,3 +75,12 @@ class VacancyQueryBuilder:
         await session.commit()
         await session.refresh(vacancy)
         return vacancy
+
+    @staticmethod
+    async def update_vacancy_fully(session: AsyncSessionDep, vacancy_id: int, data: VacancyCreateSchema) -> Vacancy:
+        vacancy = await VacancyQueryBuilder.get_vacancy_by_id(session, vacancy_id)
+        for key, value in data.model_dump().items():
+            setattr(vacancy, key, value)
+        await session.commit()
+        await session.refresh(vacancy)
+        return vacancy

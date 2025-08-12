@@ -57,3 +57,13 @@ async def update_worker(session: AsyncSessionDep,
         return worker
     except WorkerNotFound as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+
+
+@workers_router.put('/worker_by_id/{worker_id}', response_model=Worker, status_code=status.HTTP_200_OK)
+async def update_worker_fully(session: AsyncSessionDep,
+                              worker_id: int, data: WorkerCreateSchema) -> WorkerResponseSchema:
+    try:
+        worker = await WorkerQueryBuilder.update_worker_fully(session, worker_id, data)
+        return worker
+    except WorkerNotFound as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))

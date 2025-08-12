@@ -62,3 +62,13 @@ async def update_vacancy(session: AsyncSessionDep, vacancy_id: int, data: Vacanc
         return vacancy
     except VacancyNotFound as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+
+
+@vacancies_router.put('/vacancy_by_id/{vacancy_id}', response_model=Vacancy, status_code=status.HTTP_200_OK)
+async def update_vacancy_fully(session: AsyncSessionDep,
+                               vacancy_id: int, data: VacancyCreateSchema) -> VacancyResponseSchema:
+    try:
+        vacancy = await VacancyQueryBuilder.update_vacancy_fully(session, vacancy_id, data)
+        return vacancy
+    except VacancyNotFound as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
