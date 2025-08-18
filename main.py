@@ -21,4 +21,4 @@ app = FastAPI(lifespan=lifespan)
 
 app.include_router(workers_router, tags=['workers, workers, worker_by_id, worker_by_id'])
 app.include_router(vacancies_router, tags=['vacancies, vacancies, vacancy_by_id, vacancy_by_id'])
-app.include_router(users_router)
+app.include_router(users_router, tags=['users'])

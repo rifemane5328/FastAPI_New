@@ -4,7 +4,7 @@ from typing import Optional
 from sqlalchemy import Column, String, DateTime, DECIMAL
 from sqlmodel import SQLModel, Field, Relationship
 
-from models import Worker
+from models import Worker, User
 
 
 class Vacancy(SQLModel, table=True):
@@ -17,3 +17,5 @@ class Vacancy(SQLModel, table=True):
     salary: float = Field(sa_column=Column(DECIMAL(10, 2)))
     worker_id: int = Field(foreign_key="workers.id", nullable=False, ondelete="CASCADE")
     worker: Worker = Relationship(back_populates="vacancies")
+    user_id: Optional[int] = Field(foreign_key="users.id", ondelete="CASCADE")
+    user: User = Relationship(back_populates="vacancies")

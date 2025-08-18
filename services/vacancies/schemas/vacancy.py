@@ -11,6 +11,7 @@ class VacancyResponseSchema(SQLModel):
     created_at: datetime
     salary: float
     worker_id: int
+    user_id: int
 
 
 class VacancyListResponseSchema(SQLModel):
@@ -23,6 +24,7 @@ class VacancyCreateSchema(SQLModel):
     created_at: datetime
     salary: float
     worker_id: int
+    user_id: int
 
 
 class VacancyUpdateSchema(SQLModel):
@@ -30,4 +32,5 @@ class VacancyUpdateSchema(SQLModel):
     description: Optional[str] = Field(default=None, max_length=1000)
     created_at: Optional[datetime] = Field(default=None)
     salary: Optional[float] = Field(default=None)
-    worker_id: Optional[float] = Field(default=None)
+    worker_id: Optional[int] = Field(default=None)
+    user_id: Optional[int] = Field(default=None)
