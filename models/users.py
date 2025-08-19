@@ -14,4 +14,4 @@ class User(SQLModel, table=True):
     is_active: bool = Field(default=True)
     is_superuser: bool = Field(default=False)
     is_verified: bool = Field(default=False)
-    vacancies: List["Vacancy"] = Relationship(back_populates="user", cascade_delete=True)
+    vacancies: Optional[List["Vacancy"]] = Relationship(back_populates="user", cascade_delete=True)

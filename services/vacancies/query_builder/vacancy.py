@@ -1,6 +1,7 @@
 from typing import List, Optional
 from fastapi import Query
 from sqlalchemy import Select
+from sqlalchemy.orm import selectinload
 
 from sqlmodel import select, delete
 from dependecies.session import AsyncSessionDep
@@ -53,7 +54,7 @@ class VacancyQueryBuilder:
     @staticmethod
     async def create_vacancy(session: AsyncSessionDep, data: VacancyCreateSchema) -> Vacancy:
         vacancy = Vacancy(title=data.title, description=data.description, created_at=data.created_at,
-                          salary=data.salary, worker_id=data.worker_id)
+                          salary=data.salary, worker_id=data.worker_id, user_id=data.user_id)
         session.add(vacancy)
         await session.commit()
         await session.refresh(vacancy)
@@ -84,3 +85,12 @@ class VacancyQueryBuilder:
         await session.commit()
         await session.refresh(vacancy)
         return vacancy
+
+    @staticmethod
+    async def get_vacancies_of_user(session: AsyncSessionDep, user_id: int) -> List[Vacancy]:
+        select_query = select(Vacancy).where(Vacancy.user_id == user_id)
+        query_result = await session.execute(select_query)
+        vacancies = list(query_result.scalars())
+        if not vacancies:
+            raise EmptyQueryResult
+        return vacancies

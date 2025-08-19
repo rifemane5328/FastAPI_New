@@ -1,8 +1,9 @@
 from datetime import date
 from typing import List, Optional
-
-from pydantic import ConfigDict
 from sqlmodel import SQLModel, Field
+from pydantic import ConfigDict
+
+from services import VacancyResponseSchema
 
 
 # this class uses only for get-requests
@@ -12,6 +13,9 @@ class WorkerResponseSchema(SQLModel):
     last_name: str = Field(max_length=20)
     biography: str = Field(max_length=250)
     birth_date: date
+    vacancies: List[VacancyResponseSchema]
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class WorkerListResponseSchema(SQLModel):
@@ -25,6 +29,7 @@ class WorkerCreateSchema(SQLModel):
     last_name: str = Field(max_length=20)
     biography: str = Field(max_length=250)
     birth_date: date
+    vacancies: Optional[List[VacancyResponseSchema]]
 
 
 class WorkerUpdateSchema(SQLModel):
@@ -32,3 +37,4 @@ class WorkerUpdateSchema(SQLModel):
     last_name: Optional[str] = Field(default=None, max_length=20)
     biography: Optional[str] = Field(default=None, max_length=250)
     birth_date: Optional[date] = Field(default=None)
+    vacancies: Optional[List[VacancyResponseSchema]] = Field(default=None)

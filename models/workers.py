@@ -13,4 +13,4 @@ class Worker(SQLModel, table=True):
     last_name: str = Field(sa_column=Column(String(20), nullable=False))
     biography: str = Field(sa_column=Column(String(250)))
     birth_date: Optional[date] = Field(sa_column=Column(Date()))
-    vacancies: List["Vacancy"] = Relationship(back_populates="worker", cascade_delete=True)
+    vacancies: Optional[List["Vacancy"]] = Relationship(back_populates="worker", cascade_delete=True)

@@ -11,7 +11,7 @@ from services.workers.query_builder.worker import WorkerQueryBuilder
 from services.workers.schemas.filters import WorkerFilter
 from services.workers.schemas.worker import (WorkerListResponseSchema, WorkerResponseSchema, WorkerCreateSchema,
                                              WorkerUpdateSchema)
-from services.workers.errors import WorkerNotFound
+from services.workers.errors import WorkerNotFound, WorkerWithNameAlreadyExists
 from services.users.modules.manager import current_active_user
 
 workers_router = APIRouter()
@@ -41,12 +41,15 @@ async def get_worker_by_id(session: AsyncSessionDep, worker_id: int,
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 
 
-@workers_router.post('/workers', status_code=status.HTTP_201_CREATED, response_model=WorkerResponseSchema)
-async def create_worker(session: AsyncSessionDep, data: Worker,
+@workers_router.post('/workers', status_code=status.HTTP_201_CREATED)
+async def create_worker(session: AsyncSessionDep, data: WorkerCreateSchema,
                         user: User = Depends(current_active_user)) -> WorkerResponseSchema:
-    new_worker = await WorkerQueryBuilder.create_worker(session, data)
-    print(f"User {user.email} has created a new worker")
-    return new_worker
+    try:
+        worker = await WorkerQueryBuilder.create_worker(session, data)
+        print(f"User {user.email} has created a new worker")
+        return WorkerResponseSchema.model_validate(worker)
+    except WorkerWithNameAlreadyExists as e:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
 
 
 @workers_router.delete('/worker_by_id/{id}', status_code=status.HTTP_204_NO_CONTENT,

@@ -86,3 +86,25 @@ async def update_vacancy_fully(session: AsyncSessionDep, vacancy_id: int, data: 
         return vacancy
     except VacancyNotFound as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+
+
+@vacancies_router.get('/user/{id}/vacancies')
+async def get_vacancies_of_user(session: AsyncSessionDep, user_id: int,
+                                user: User = Depends(current_active_user)) -> VacancyListResponseSchema:
+    try:
+        vacancies = await VacancyQueryBuilder.get_vacancies_of_user(session, user_id)
+        print(f"User {user.email} has sent a request")
+        return VacancyListResponseSchema(first_name=user.first_name, last_name=user.last_name, items=vacancies)
+    except EmptyQueryResult as e:
+        raise HTTPException(status_code=status.HTTP_204_NO_CONTENT, detail=str(e))
+
+
+@vacancies_router.get('/current_user/vacancies')
+async def get_vacancies_of_current_user(session: AsyncSessionDep,
+                                        user: User = Depends(current_active_user)) -> VacancyListResponseSchema:
+    try:
+        vacancies = await VacancyQueryBuilder.get_vacancies_of_user(session, user.id)
+        print(f"User {user.email} has sent a request")
+        return VacancyListResponseSchema(items=vacancies)
+    except EmptyQueryResult as e:
+        raise HTTPException(status_code=status.HTTP_204_NO_CONTENT, detail=str(e))

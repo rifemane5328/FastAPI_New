@@ -1,16 +1,18 @@
 from typing import List, Optional
 
 from sqlalchemy import Select
+from sqlalchemy.orm import selectinload
 
 from sqlmodel import select, delete
 
 from common.pagination import PaginationParams
 from dependecies.session import AsyncSessionDep
 from common.errors import EmptyQueryResult
-from models import Worker
+from models import Worker, Vacancy
 from services.workers.schemas.filters import WorkerFilter
 from services.workers.schemas.worker import WorkerCreateSchema, WorkerUpdateSchema
-from services.workers.errors import WorkerNotFound
+from services.workers.errors import WorkerNotFound, WorkerWithNameAlreadyExists
+from services.vacancies.schemas.vacancy import VacancyResponseSchema
 
 
 class WorkerQueryBuilder:
@@ -19,8 +21,8 @@ class WorkerQueryBuilder:
                           name_filter: Optional[WorkerFilter] = None) -> List[Worker]:
 
         query_offset, query_limit = (pagination_params.page - 1) * pagination_params.size, pagination_params.size
-        select_query = (WorkerQueryBuilder.apply_filters(select(Worker), name_filter).offset(query_offset)
-                        .limit(query_limit))
+        select_query = (WorkerQueryBuilder.apply_filters(select(Worker).options(selectinload(Worker.vacancies)),
+                                                         name_filter).offset(query_offset).limit(query_limit))
         result = await session.execute(select_query)
         workers = list(result.scalars())
         if not workers:
@@ -44,10 +46,15 @@ class WorkerQueryBuilder:
 
     @staticmethod
     async def create_worker(session: AsyncSessionDep, data: WorkerCreateSchema) -> Worker:
-        worker = Worker(name=data.name, last_name=data.last_name, biography=data.biography, birth_date=data.birth_date)
+        query = select(Worker).where(Worker.name == data.name)
+        result = await session.execute(query)
+        if result.scalar():
+            raise WorkerWithNameAlreadyExists
+        worker = Worker(**data.model_dump(exclude={"vacancies"}),
+                        vacancies=[Vacancy(**v.model_dump()) for v in data.vacancies] if data.vacancies else [])
         session.add(worker)
         await session.commit()
-        await session.refresh(worker)
+        await session.refresh(worker, attribute_names=['vacancies'])
         return worker
 
     @staticmethod
@@ -75,4 +82,3 @@ class WorkerQueryBuilder:
         await session.commit()
         await session.refresh(worker)
         return worker
-
